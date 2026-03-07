@@ -1,0 +1,106 @@
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+
+// Plan configurations (duration in hours)
+const PLANS = {
+  Silver: {
+    name: 'Silver Plan',
+    price: 999, // in cents ($9.99)
+    duration: 6, // hours
+    features: [
+      'Access to Silver gaming rooms',
+      'Custom gaming profile badge',
+      'Priority matchmaking',
+      'Chat history 30 days',
+    ],
+  },
+  Gold: {
+    name: 'Gold Plan',
+    price: 1999, // in cents ($19.99)
+    duration: 12, // hours
+    features: [
+      'All Silver features',
+      'Access to exclusive Gold tournaments',
+      'Advanced analytics dashboard',
+      'Unlimited chat history',
+      '24/7 Priority support',
+    ],
+  },
+};
+
+/**
+ * Create Stripe checkout session
+ */
+const createCheckoutSession = async (userId, userEmail, planType) => {
+  const plan = PLANS[planType];
+  if (!plan) throw new Error('Invalid plan type');
+
+  const session = await stripe.checkout.sessions.create({
+    payment_method_types: ['card'],
+    mode: 'payment',
+    customer_email: userEmail,
+    line_items: [
+      {
+        price_data: {
+          currency: 'usd',
+          product_data: {
+            name: plan.name,
+            description: plan.features.join(' • '),
+            images: [],
+          },
+          unit_amount: plan.price,
+        },
+        quantity: 1,
+      },
+    ],
+    metadata: {
+      userId: userId.toString(),
+      planType,
+    },
+    success_url: `${process.env.CLIENT_URL}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
+    cancel_url: `${process.env.CLIENT_URL}/plans`,
+  });
+
+  return session;
+};
+
+/**
+ * Retrieve checkout session
+ */
+const retrieveSession = async (sessionId) => {
+  return await stripe.checkout.sessions.retrieve(sessionId);
+};
+
+/**
+ * Construct webhook event
+ */
+const constructWebhookEvent = (payload, signature, secret) => {
+  return stripe.webhooks.constructEvent(payload, signature, secret);
+};
+
+/**
+ * Get plan duration in hours
+ */
+const getPlanDuration = (planType) => {
+  return PLANS[planType]?.duration || 0;
+};
+
+/**
+ * Get plan details
+ */
+const getPlanDetails = (planType) => {
+  return PLANS[planType] || null;
+};
+
+/**
+ * Get all plans
+ */
+const getAllPlans = () => PLANS;
+
+module.exports = {
+  createCheckoutSession,
+  retrieveSession,
+  constructWebhookEvent,
+  getPlanDuration,
+  getPlanDetails,
+  getAllPlans,
+};
