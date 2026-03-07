@@ -1,0 +1,265 @@
+@use './variables' as *;
+@use 'sass:color';
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap');
+
+// ─── Reset & Base ────────────────────────────────────────────────────────────
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: $font-family;
+  background-color: $dark;
+  color: $text;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  min-height: 100vh;
+}
+
+a {
+  color: $primary;
+  text-decoration: none;
+  transition: color $transition-fast;
+
+  &:hover { color: color.adjust($primary, $lightness: 15%); }
+}
+
+// ─── Scrollbar ───────────────────────────────────────────────────────────────
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: $surface;
+}
+::-webkit-scrollbar-thumb {
+  background: $primary;
+  border-radius: $radius-full;
+}
+
+// ─── Utility Classes ─────────────────────────────────────────────────────────
+.gradient-text {
+  background: $gradient-primary;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.glass-card {
+  background: rgba(26, 26, 46, 0.8);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(108, 99, 255, 0.15);
+  border-radius: $radius-xl;
+  box-shadow: $shadow-md;
+}
+
+.btn-primary {
+  background: $gradient-primary;
+  color: white;
+  border: none;
+  padding: 12px 28px;
+  border-radius: $radius-lg;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all $transition-base;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: $shadow-primary;
+    opacity: 0.9;
+  }
+
+  &:active { transform: translateY(0); }
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+  }
+}
+
+.btn-outline {
+  background: transparent;
+  color: $primary;
+  border: 2px solid $primary;
+  padding: 10px 26px;
+  border-radius: $radius-lg;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all $transition-base;
+
+  &:hover {
+    background: $primary;
+    color: white;
+    transform: translateY(-2px);
+  }
+}
+
+.btn-danger {
+  background: linear-gradient(135deg, $error, color.adjust($error, $lightness: -15%));
+  color: white;
+  border: none;
+  padding: 10px 22px;
+  border-radius: $radius-md;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all $transition-base;
+
+  &:hover {
+    opacity: 0.85;
+    transform: translateY(-1px);
+  }
+}
+
+// ─── Input Styles ────────────────────────────────────────────────────────────
+.input-field {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(108, 99, 255, 0.3);
+  border-radius: $radius-md;
+  padding: 12px 16px;
+  color: $text;
+  font-size: 0.95rem;
+  font-family: $font-family;
+  transition: border-color $transition-fast, box-shadow $transition-fast;
+
+  &::placeholder { color: $muted; }
+
+  &:focus {
+    outline: none;
+    border-color: $primary;
+    box-shadow: 0 0 0 3px rgba($primary, 0.15);
+    background: rgba(255, 255, 255, 0.08);
+  }
+}
+
+// ─── Badge Styles ────────────────────────────────────────────────────────────
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 12px;
+  border-radius: $radius-full;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+
+  &.badge-free {
+    background: rgba(255,255,255,0.1);
+    color: $muted;
+    border: 1px solid rgba(255,255,255,0.15);
+  }
+
+  &.badge-silver {
+    background: rgba(192, 192, 192, 0.15);
+    color: $silver;
+    border: 1px solid rgba($silver, 0.3);
+  }
+
+  &.badge-gold {
+    background: rgba(255, 215, 0, 0.15);
+    color: $gold;
+    border: 1px solid rgba($gold, 0.3);
+  }
+
+  &.badge-admin {
+    background: rgba($secondary, 0.15);
+    color: $secondary;
+    border: 1px solid rgba($secondary, 0.3);
+  }
+}
+
+// ─── Loading Spinner ─────────────────────────────────────────────────────────
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba($primary, 0.2);
+  border-top-color: $primary;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+// ─── Toast / Alert ───────────────────────────────────────────────────────────
+.alert {
+  padding: 14px 18px;
+  border-radius: $radius-md;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  &.alert-success {
+    background: rgba($success, 0.15);
+    border: 1px solid rgba($success, 0.3);
+    color: color.adjust($success, $lightness: 20%);
+  }
+
+  &.alert-error {
+    background: rgba($error, 0.15);
+    border: 1px solid rgba($error, 0.3);
+    color: color.adjust($error, $lightness: 20%);
+  }
+
+  &.alert-warning {
+    background: rgba($warning, 0.15);
+    border: 1px solid rgba($warning, 0.3);
+    color: color.adjust($warning, $lightness: 20%);
+  }
+
+  &.alert-info {
+    background: rgba($primary, 0.15);
+    border: 1px solid rgba($primary, 0.3);
+    color: color.adjust($primary, $lightness: 20%);
+  }
+}
+
+// ─── Page Layout ─────────────────────────────────────────────────────────────
+.page-wrapper {
+  min-height: 100vh;
+  display: flex;
+}
+
+.main-content {
+  flex: 1;
+  padding: $spacing-xl;
+  overflow-y: auto;
+
+  @media (max-width: $breakpoint-md) {
+    padding: $spacing-md;
+  }
+}
+
+// ─── Animations ──────────────────────────────────────────────────────────────
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes glow {
+  0%, 100% { box-shadow: 0 0 20px rgba($primary, 0.3); }
+  50% { box-shadow: 0 0 40px rgba($primary, 0.6); }
+}
+
+.animate-fade-in { animation: fadeIn 0.5s ease-in-out; }
+.animate-slide-up { animation: slideUp 0.4s ease-out; }
+.animate-glow { animation: glow 2s ease-in-out infinite; }
