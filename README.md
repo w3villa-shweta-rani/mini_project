@@ -126,6 +126,13 @@ cd frontend && npm run dev
 | PUT | `/api/admin/users/:id/role` | Change role |
 | DELETE | `/api/admin/users/:id` | Delete user |
 
+### Games (Protected)
+| Method | Route | Description |
+|--------|-------|-------------|
+| GET | `/api/games` | Get allowed games + daily playtime summary |
+| GET | `/api/games/:gameId` | Start a game session (checks plan + time limit) |
+| POST | `/api/games/:gameId/stop` | Stop game session and update playtime |
+
 ## 💳 Test Stripe
 
 Use card: `4242 4242 4242 4242` | Any future date | Any 3-digit CVC
@@ -139,6 +146,20 @@ Use card: `4242 4242 4242 4242` | Any future date | Any 3-digit CVC
 | Gold | $19.99 | 12 hours |
 
 > Plans auto-expire via node-cron running every minute.
+
+## 🎮 Game Access System
+
+Game access is plan-based with daily playtime limits:
+
+| Plan | Allowed Games | Daily Limit |
+|------|---------------|-------------|
+| Free | Tic Tac Toe | 30 minutes |
+| Silver | Tic Tac Toe, Snake | 6 hours |
+| Gold | Tic Tac Toe, Snake, Rock Paper Scissors | 12 hours |
+
+Frontend routes:
+- `/games` (library)
+- `/games/:gameId` (play)
 
 ## 🛡️ Create Admin User
 

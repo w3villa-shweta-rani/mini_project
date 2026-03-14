@@ -16,6 +16,8 @@ import Plans from './pages/Plans';
 import Payment from './pages/Payment';
 import AdminDashboard from './pages/AdminDashboard';
 import UserManagement from './pages/UserManagement';
+import Games from './pages/Games';
+import GamePlay from './pages/GamePlay';
 
 const App = () => {
   return (
@@ -39,6 +41,8 @@ const App = () => {
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/plans" element={<Plans />} />
+            <Route path="/games" element={<Games />} />
+            <Route path="/games/:gameId" element={<GamePlay />} />
           </Route>
 
           {/* Admin only */}

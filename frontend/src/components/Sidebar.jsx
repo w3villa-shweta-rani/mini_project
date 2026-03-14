@@ -14,6 +14,7 @@ const Sidebar = ({ collapsed = false }) => {
   const links = [
     { to: '/dashboard', icon: '🎮', label: 'Dashboard' },
     { to: '/profile', icon: '👤', label: 'Profile' },
+    { to: '/games', icon: '🕹️', label: 'Games' },
     { to: '/plans', icon: '💎', label: 'Plans' },
   ];
 
