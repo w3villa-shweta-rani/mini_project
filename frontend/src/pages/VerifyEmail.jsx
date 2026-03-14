@@ -27,8 +27,15 @@ const VerifyEmail = () => {
           setTimeout(() => navigate('/login'), 3000);
         }
       } catch (err) {
+        const apiMessage = err.response?.data?.message;
+        if (apiMessage && apiMessage.toLowerCase().includes('invalid or expired')) {
+          setStatus('success');
+          setMessage('Your email is already verified. You can log in now.');
+          setTimeout(() => navigate('/login'), 3000);
+          return;
+        }
         setStatus('error');
-        setMessage(err.response?.data?.message || 'Verification failed. Link may be expired.');
+        setMessage(apiMessage || 'Verification failed. Link may be expired.');
       }
     };
 
