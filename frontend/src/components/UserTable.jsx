@@ -39,8 +39,8 @@ const UserTable = ({ users, onDelete, onEdit, loading }) => {
               {/* User */}
               <td className="px-4 py-3">
                 <div className="flex items-center gap-3">
-                  {user.profileImage ? (
-                    <img src={user.profileImage} alt={user.name}
+                  {user.profileImageUrl || user.profileImage ? (
+                    <img src={user.profileImageUrl || user.profileImage} alt={user.name}
                          className="w-8 h-8 rounded-full object-cover border border-primary/30" />
                   ) : (
                     <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0"

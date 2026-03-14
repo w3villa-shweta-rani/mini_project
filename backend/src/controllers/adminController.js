@@ -1,4 +1,22 @@
 const User = require('../models/User');
+const { getPresignedUrl } = require('../services/storjService');
+
+// Helper to add presigned URLs (Storj) or passthrough external URLs
+const addPresignedUrls = async (users) => {
+  return Promise.all(
+    users.map(async (user) => {
+      const userData = user.toObject ? user.toObject() : { ...user };
+      if (userData.profileImage) {
+        if (typeof userData.profileImage === 'string' && userData.profileImage.startsWith('http')) {
+          userData.profileImageUrl = userData.profileImage;
+        } else {
+          userData.profileImageUrl = await getPresignedUrl(userData.profileImage);
+        }
+      }
+      return userData;
+    })
+  );
+};
 
 // ─── GET /api/admin/users ────────────────────────────────────────────────────
 const getAllUsers = async (req, res, next) => {
@@ -37,10 +55,13 @@ const getAllUsers = async (req, res, next) => {
       User.countDocuments(query),
     ]);
 
+    // Add presigned URLs to all users
+    const usersWithUrls = await addPresignedUrls(users);
+
     res.status(200).json({
       success: true,
       data: {
-        users,
+        users: usersWithUrls,
         pagination: {
           total,
           page: parseInt(page),

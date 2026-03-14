@@ -59,8 +59,8 @@ const Navbar = () => {
                   onClick={() => setDropdownOpen(!dropdownOpen)}
                   className="flex items-center gap-2 p-1 rounded-full hover:bg-white/10 transition-colors"
                 >
-                  {user?.profileImage ? (
-                    <img src={user.profileImage} alt={user.name}
+                  {user?.profileImageUrl || user?.profileImage ? (
+                    <img src={user.profileImageUrl || user.profileImage} alt={user.name}
                          className="w-8 h-8 rounded-full object-cover border-2 border-primary/50" />
                   ) : (
                     <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white"

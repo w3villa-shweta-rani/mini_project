@@ -179,7 +179,10 @@ const Profile = () => {
       });
       if (res.data.success) {
         setSuccess('Profile image uploaded!');
-        updateUserLocally({ profileImage: res.data.data.profileImage });
+        updateUserLocally({ 
+          profileImage: res.data.data.profileImage,
+          profileImageUrl: res.data.data.profileImageUrl 
+        });
         setSelectedFile(null);
         setImagePreview(null);
       }
@@ -208,6 +211,9 @@ const Profile = () => {
     }
   };
 
+  // Get the display URL for profile image
+  const profileImageSrc = imagePreview || user?.profileImageUrl || user?.profileImage;
+
   return (
     <div className="p-6 max-w-5xl mx-auto animate-fade-in">
       <div className="flex items-center justify-between mb-8">
@@ -229,8 +235,8 @@ const Profile = () => {
         <div className="lg:col-span-1">
           <div className="glass-card p-6 text-center">
             <div className="relative inline-block mb-4">
-              {imagePreview || user?.profileImage ? (
-                <img src={imagePreview || user.profileImage} alt={user?.name}
+              {profileImageSrc ? (
+                <img src={profileImageSrc} alt={user?.name}
                      className="w-28 h-28 rounded-full object-cover border-4 border-primary/40 mx-auto" />
               ) : (
                 <div className="w-28 h-28 rounded-full flex items-center justify-center text-4xl font-bold text-white mx-auto border-4 border-primary/30"

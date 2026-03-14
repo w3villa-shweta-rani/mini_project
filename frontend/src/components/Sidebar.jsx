@@ -38,8 +38,8 @@ const Sidebar = ({ collapsed = false }) => {
       {!collapsed && user && (
         <div className="p-4 border-b border-white/10">
           <div className="flex items-center gap-3">
-            {user.profileImage ? (
-              <img src={user.profileImage} alt={user.name}
+            {user.profileImageUrl || user.profileImage ? (
+              <img src={user.profileImageUrl || user.profileImage} alt={user.name}
                    className="w-10 h-10 rounded-full object-cover border-2 border-primary/50" />
             ) : (
               <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold text-white flex-shrink-0"

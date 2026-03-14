@@ -4,6 +4,20 @@ const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const User = require('../models/User');
 const { generateToken } = require('../middleware/authMiddleware');
 const { sendVerificationEmail, sendWelcomeEmail } = require('../services/emailService');
+const { getPresignedUrl } = require('../services/storjService');
+
+// Helper function to add presigned URL (Storj) or passthrough external URLs
+const addPresignedUrl = async (user) => {
+  const userData = user.toObject ? user.toObject() : { ...user };
+  if (userData.profileImage) {
+    if (typeof userData.profileImage === 'string' && userData.profileImage.startsWith('http')) {
+      userData.profileImageUrl = userData.profileImage;
+    } else {
+      userData.profileImageUrl = await getPresignedUrl(userData.profileImage);
+    }
+  }
+  return userData;
+};
 
 // ─── Configure Google OAuth Strategy ────────────────────────────────────────
 passport.use(
@@ -21,18 +35,28 @@ passport.use(
           // Update social provider if needed
           if (user.socialProvider === 'local') {
             user.socialProvider = 'google';
+          }
+
+          // If profile image is missing, hydrate it from Google
+          const googlePhoto = profile.photos?.[0]?.value;
+          if (!user.profileImage && googlePhoto) {
+            user.profileImage = googlePhoto;
+          }
+
+          if (user.isModified()) {
             await user.save();
           }
           return done(null, user);
         }
 
         // Create new user from Google
+        const googlePhoto = profile.photos?.[0]?.value || null;
         user = await User.create({
           name: profile.displayName,
           email: profile.emails[0].value,
           socialProvider: 'google',
           isVerified: true,
-          profileImage: profile.photos[0]?.value || null,
+          profileImage: googlePhoto,
         });
 
         return done(null, user);
@@ -205,6 +229,9 @@ const login = async (req, res, next) => {
     // Generate token
     const token = generateToken(user._id);
 
+  // Get presigned URL (Storj) or use external URL for Google accounts
+  const userData = await addPresignedUrl(user);
+
     res.status(200).json({
       success: true,
       message: 'Login successful!',
@@ -216,6 +243,7 @@ const login = async (req, res, next) => {
         role: user.role,
         planType: user.planType,
         profileImage: user.profileImage,
+        profileImageUrl: userData.profileImageUrl || null,
         isVerified: user.isVerified,
       },
     });
@@ -226,16 +254,28 @@ const login = async (req, res, next) => {
 };
 
 // ─── GET /api/auth/google ────────────────────────────────────────────────────
+// Add a prompt to force account selection (helps with testing) and include accessType
 const googleAuth = passport.authenticate('google', {
   scope: ['profile', 'email'],
   session: false,
+  prompt: 'select_account',
+  accessType: 'offline',
 });
 
 // ─── GET /api/auth/google/callback ──────────────────────────────────────────
 const googleCallback = (req, res, next) => {
-  passport.authenticate('google', { session: false }, (err, user) => {
-    if (err || !user) {
-      return res.redirect(`${process.env.CLIENT_URL}/login?error=google_auth_failed`);
+  // Provide improved logging and return a reason query param for easier debugging
+  passport.authenticate('google', { session: false }, (err, user, info) => {
+    if (err) {
+      console.error('Google OAuth error:', err);
+      const reason = encodeURIComponent(err.message || (info && info.message) || 'google_auth_failed');
+      return res.redirect(`${process.env.CLIENT_URL}/login?error=google_auth_failed&reason=${reason}`);
+    }
+
+    if (!user) {
+      console.error('Google OAuth failed, no user returned. Info:', info);
+      const reason = encodeURIComponent((info && info.message) || 'no_user_from_google');
+      return res.redirect(`${process.env.CLIENT_URL}/login?error=google_auth_failed&reason=${reason}`);
     }
 
     const token = generateToken(user._id);
@@ -247,7 +287,8 @@ const googleCallback = (req, res, next) => {
 const getMe = async (req, res, next) => {
   try {
     const user = await User.findById(req.user._id).select('-password -verificationToken -verificationTokenExpiry');
-    res.status(200).json({ success: true, data: user });
+    const userData = await addPresignedUrl(user);
+    res.status(200).json({ success: true, data: userData });
   } catch (error) {
     next(error);
   }

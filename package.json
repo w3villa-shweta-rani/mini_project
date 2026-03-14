@@ -1,0 +1,13 @@
+{
+  "name": "gamerhub",
+  "version": "1.0.0",
+  "description": "GamerHub - Full Stack Gaming Community SaaS Platform",
+  "scripts": {
+    "backend": "cd backend && npm run dev",
+    "frontend": "cd frontend && npm run dev",
+    "install:all": "cd backend && npm install && cd ../frontend && npm install",
+    "build": "cd frontend && npm run build"
+  },
+  "author": "GamerHub Team",
+  "license": "MIT"
+}

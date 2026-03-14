@@ -1,6 +1,6 @@
 const multer = require('multer');
 const User = require('../models/User');
-const { uploadProfileImage, deleteProfileImage } = require('../services/storjService');
+const { uploadProfileImage, deleteProfileImage, getPresignedUrl } = require('../services/storjService');
 
 // Multer memory storage for Storj upload
 const upload = multer({
@@ -16,6 +16,19 @@ const upload = multer({
   },
 });
 
+// Helper function to add presigned URL (Storj) or passthrough external URLs
+const addPresignedUrl = async (user) => {
+  const userData = user.toObject ? user.toObject() : { ...user };
+  if (userData.profileImage) {
+    if (typeof userData.profileImage === 'string' && userData.profileImage.startsWith('http')) {
+      userData.profileImageUrl = userData.profileImage;
+    } else {
+      userData.profileImageUrl = await getPresignedUrl(userData.profileImage);
+    }
+  }
+  return userData;
+};
+
 // ─── GET /api/user/profile ───────────────────────────────────────────────────
 const getProfile = async (req, res, next) => {
   try {
@@ -23,7 +36,9 @@ const getProfile = async (req, res, next) => {
       '-password -verificationToken -verificationTokenExpiry'
     );
     if (!user) return res.status(404).json({ success: false, message: 'User not found.' });
-    res.status(200).json({ success: true, data: user });
+    
+    const userData = await addPresignedUrl(user);
+    res.status(200).json({ success: true, data: userData });
   } catch (error) {
     next(error);
   }
@@ -53,7 +68,8 @@ const updateProfile = async (req, res, next) => {
       { new: true, runValidators: true }
     ).select('-password -verificationToken');
 
-    res.status(200).json({ success: true, message: 'Profile updated successfully.', data: user });
+    const userData = await addPresignedUrl(user);
+    res.status(200).json({ success: true, message: 'Profile updated successfully.', data: userData });
   } catch (error) {
     next(error);
   }
@@ -68,25 +84,34 @@ const uploadImage = async (req, res, next) => {
 
     const user = await User.findById(req.user._id);
 
-    if (user.profileImage) {
+    // Delete old image if exists
+    if (user.profileImage && !(typeof user.profileImage === 'string' && user.profileImage.startsWith('http'))) {
       await deleteProfileImage(user.profileImage);
     }
 
-    const imageUrl = await uploadProfileImage(
+    // Upload new image - returns the key
+    const imageKey = await uploadProfileImage(
       req.file.buffer,
       req.file.mimetype,
       req.user._id.toString()
     );
 
-    user.profileImage = imageUrl;
+    user.profileImage = imageKey;
     await user.save();
+
+    // Get presigned URL for response
+  const presignedUrl = await getPresignedUrl(imageKey);
 
     res.status(200).json({
       success: true,
       message: 'Profile image uploaded successfully.',
-      data: { profileImage: imageUrl },
+      data: { 
+        profileImage: imageKey,
+        profileImageUrl: presignedUrl 
+      },
     });
   } catch (error) {
+    console.error('Upload error:', error);
     next(error);
   }
 };
@@ -100,7 +125,9 @@ const deleteImage = async (req, res, next) => {
       return res.status(400).json({ success: false, message: 'No profile image to delete.' });
     }
 
-    await deleteProfileImage(user.profileImage);
+    if (!(typeof user.profileImage === 'string' && user.profileImage.startsWith('http'))) {
+      await deleteProfileImage(user.profileImage);
+    }
     user.profileImage = null;
     await user.save();
 
@@ -118,6 +145,12 @@ const downloadProfile = async (req, res, next) => {
     );
 
     if (!user) return res.status(404).json({ success: false, message: 'User not found.' });
+
+    const profileImageUrl = user.profileImage
+      ? (typeof user.profileImage === 'string' && user.profileImage.startsWith('http')
+        ? user.profileImage
+        : await getPresignedUrl(user.profileImage))
+      : null;
 
     const profileData = {
       'GamerHub Profile Export': { 'Generated At': new Date().toISOString() },
@@ -139,7 +172,7 @@ const downloadProfile = async (req, res, next) => {
         Address: user.address || 'Not set',
         Coordinates: user.location?.lat ? `${user.location.lat}, ${user.location.lng}` : 'Not set',
       },
-      'Profile Image': user.profileImage || 'Not uploaded',
+      'Profile Image': profileImageUrl || 'Not uploaded',
     };
 
     res.setHeader('Content-Type', 'application/json');
