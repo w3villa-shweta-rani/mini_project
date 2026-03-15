@@ -52,6 +52,10 @@ if (process.env.NODE_ENV === 'development') {
 app.use(passport.initialize());
 
 // ─── Health Check ─────────────────────────────────────────────────────────────
+app.get('/', (req, res) => {
+  res.status(200).send('GamerHub API is running 🚀');
+});
+
 app.get('/health', (req, res) => {
   res.status(200).json({
     success: true,
