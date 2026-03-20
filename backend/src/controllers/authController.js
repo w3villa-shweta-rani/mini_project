@@ -105,8 +105,10 @@ const signup = async (req, res, next) => {
       socialProvider: 'local',
     });
 
-    // Send verification email (errors handled inside emailService)
-    await sendVerificationEmail(email, name, verificationToken);
+    // Send verification email asynchronously so signup isn't blocked
+    sendVerificationEmail(email, name, verificationToken).catch((err) => {
+      console.error('Verification email error:', err.message);
+    });
 
     res.status(201).json({
       success: true,

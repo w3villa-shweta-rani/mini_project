@@ -29,6 +29,9 @@ const getTransporter = () => {
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASS,
     },
+    connectionTimeout: 10000,
+    greetingTimeout: 10000,
+    socketTimeout: 10000,
   });
 };
 
@@ -38,15 +41,20 @@ const sendMail = async ({ to, subject, html, text }) => {
     return false;
   }
 
-  await transporter.sendMail({
-    from: process.env.EMAIL_FROM || 'GamerHub <noreply@gamerhub.com>',
-    to,
-    subject,
-    text,
-    html,
-  });
+  try {
+    await transporter.sendMail({
+      from: process.env.EMAIL_FROM || 'GamerHub <noreply@gamerhub.com>',
+      to,
+      subject,
+      text,
+      html,
+    });
 
-  return true;
+    return true;
+  } catch (error) {
+    console.error('❌ Email send error:', error.message);
+    return false;
+  }
 };
 
 /**
