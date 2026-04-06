@@ -20,7 +20,7 @@ import Games from './pages/Games';
 import GamePlay from './pages/GamePlay';
 
 const App = () => {
-  const Router = import.meta.env.PROD ? HashRouter : BrowserRouter;
+const Router = BrowserRouter;
 
   return (
     <Router>
@@ -30,9 +30,8 @@ const App = () => {
           <Route path="/" element={<Landing />} />
           <Route path="/verify-email" element={<VerifyEmail />} />
           <Route path="/auth/callback" element={<AuthCallback />} />
-          <Route path="/payment/success" element={
-            <ProtectedRoute><Payment /></ProtectedRoute>
-          } />
+          <Route path="/payment/success" element={<Payment />} />
+
 
           {/* Public only (redirect if logged in) */}
           <Route path="/signup" element={<PublicRoute><Signup /></PublicRoute>} />
