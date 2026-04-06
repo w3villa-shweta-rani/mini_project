@@ -15,7 +15,14 @@ const paymentService = {
 
   // Verify payment after redirect
   verifyPayment: async (sessionId) => {
-    const res = await api.get(`/payment/verify?session_id=${sessionId}`);
+    console.log('Verifying payment with session ID:', sessionId);
+    if (!sessionId) {
+      throw new Error('Missing session_id in URL');
+    }
+
+    const res = await api.get('/payment/verify', {
+      params: { session_id: sessionId },
+    });
     return res.data;
   },
 
