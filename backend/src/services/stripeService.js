@@ -30,9 +30,15 @@ const PLANS = {
 /**
  * Create Stripe checkout session
  */
-const createCheckoutSession = async (userId, userEmail, planType) => {
+const resolveClientUrl = (clientOrigin) => {
+  const raw = process.env.CLIENT_URL || process.env.FRONTEND_URL || clientOrigin || 'http://localhost:5173';
+  return raw.replace(/\/$/, '');
+};
+
+const createCheckoutSession = async (userId, userEmail, planType, clientOrigin) => {
   const plan = PLANS[planType];
   if (!plan) throw new Error('Invalid plan type');
+  const clientUrl = resolveClientUrl(clientOrigin);
 
   const session = await stripe.checkout.sessions.create({
     payment_method_types: ['card'],
@@ -56,8 +62,8 @@ const createCheckoutSession = async (userId, userEmail, planType) => {
       userId: userId.toString(),
       planType,
     },
-    success_url: `${process.env.CLIENT_URL}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${process.env.CLIENT_URL}/plans`,
+    success_url: `${clientUrl}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
+    cancel_url: `${clientUrl}/plans`,
   });
 
   return session;

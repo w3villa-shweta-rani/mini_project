@@ -15,8 +15,18 @@ const userRoutes = require('./src/routes/userRoutes');
 const paymentRoutes = require('./src/routes/paymentRoutes');
 const adminRoutes = require('./src/routes/adminRoutes');
 const gameRoutes = require('./src/routes/gameRoutes');
+const { stripeWebhook } = require('./src/controllers/paymentController');
 
 const app = express();
+
+const normalizeOrigin = (value = '') => value.replace(/\/$/, '');
+
+const allowedOrigins = [
+  ...(process.env.CLIENT_URL ? [process.env.CLIENT_URL] : []),
+  ...(process.env.CLIENT_URLS ? process.env.CLIENT_URLS.split(',').map((url) => url.trim()).filter(Boolean) : []),
+  'http://localhost:5173',
+  'http://localhost:5000',
+].map(normalizeOrigin);
 
 // ─── Connect Database ─────────────────────────────────────────────────────────
 connectDB();
@@ -28,15 +38,24 @@ app.use(helmet({
 
 // ─── CORS ─────────────────────────────────────────────────────────────────────
 app.use(cors({
-  origin: [process.env.CLIENT_URL, 'http://localhost:5173', 'http://localhost:5000'],
+  origin: (origin, callback) => {
+    // Allow server-to-server calls and tools with no Origin header
+    if (!origin) return callback(null, true);
+
+    const normalizedOrigin = normalizeOrigin(origin);
+    if (allowedOrigins.includes(normalizedOrigin)) {
+      return callback(null, true);
+    }
+
+    return callback(new Error('Not allowed by CORS'));
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 
 // ─── Stripe Webhook (raw body BEFORE json parser) ────────────────────────────
-// Note: Stripe webhook route is also handled in paymentRoutes with express.raw()
-// This ensures the raw body is available for signature verification
+app.post('/api/payment/webhook', express.raw({ type: 'application/json' }), stripeWebhook);
 
 // ─── Body Parsers ─────────────────────────────────────────────────────────────
 app.use(express.json({ limit: '10mb' }));

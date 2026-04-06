@@ -27,7 +27,12 @@ const createCheckout = async (req, res, next) => {
       return res.status(400).json({ success: false, message: 'Invalid plan. Choose Silver or Gold.' });
     }
 
-    const session = await createCheckoutSession(req.user._id, req.user.email, planType);
+    const session = await createCheckoutSession(
+      req.user._id,
+      req.user.email,
+      planType,
+      req.headers.origin
+    );
 
     res.status(200).json({
       success: true,

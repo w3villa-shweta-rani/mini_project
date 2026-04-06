@@ -4,7 +4,6 @@ const {
   getPlans,
   createCheckout,
   verifyPayment,
-  stripeWebhook,
 } = require('../controllers/paymentController');
 const { protect } = require('../middleware/authMiddleware');
 
@@ -12,11 +11,6 @@ const { protect } = require('../middleware/authMiddleware');
 // @desc    Get all available plans
 // @access  Public
 router.get('/plans', getPlans);
-
-// @route   POST /api/payment/webhook
-// @desc    Stripe webhook (raw body needed - set in server.js)
-// @access  Public (Stripe only)
-router.post('/webhook', express.raw({ type: 'application/json' }), stripeWebhook);
 
 // Routes below require authentication
 // @route   POST /api/payment/create-checkout
