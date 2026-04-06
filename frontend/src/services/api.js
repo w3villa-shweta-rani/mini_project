@@ -31,8 +31,10 @@ api.interceptors.response.use(
       localStorage.removeItem('gamerhub_token');
       localStorage.removeItem('gamerhub_user');
       // Redirect to login only if not already there
-      if (!window.location.pathname.includes('/login')) {
-        window.location.href = '/login';
+      const currentPath = `${window.location.pathname}${window.location.hash || ''}`;
+      if (!currentPath.includes('/login')) {
+        const loginPath = import.meta.env.PROD ? '/#/login' : '/login';
+        window.location.href = loginPath;
       }
     }
     return Promise.reject(error);

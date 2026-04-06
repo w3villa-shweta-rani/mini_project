@@ -35,8 +35,9 @@ const resolveClientUrl = (clientOrigin) => {
   return raw.replace(/\/$/, '');
 };
 
-const getClientPath = (path) => {
-  if (process.env.NODE_ENV === 'production') {
+const getClientPath = (path, clientUrl) => {
+  const isLocalClient = /localhost|127\.0\.0\.1/.test(clientUrl);
+  if (!isLocalClient) {
     return `/#${path}`;
   }
   return path;
@@ -69,8 +70,8 @@ const createCheckoutSession = async (userId, userEmail, planType, clientOrigin) 
       userId: userId.toString(),
       planType,
     },
-    success_url: `${clientUrl}${getClientPath('/payment/success?session_id={CHECKOUT_SESSION_ID}')}`,
-    cancel_url: `${clientUrl}${getClientPath('/plans')}`,
+    success_url: `${clientUrl}${getClientPath('/payment/success?session_id={CHECKOUT_SESSION_ID}', clientUrl)}`,
+    cancel_url: `${clientUrl}${getClientPath('/plans', clientUrl)}`,
   });
 
   return session;
