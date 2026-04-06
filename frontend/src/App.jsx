@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { ProtectedRoute, AdminRoute, PublicRoute } from './components/ProtectedRoute';
 import DashboardLayout from './components/DashboardLayout';
@@ -20,8 +20,10 @@ import Games from './pages/Games';
 import GamePlay from './pages/GamePlay';
 
 const App = () => {
+  const Router = import.meta.env.PROD ? HashRouter : BrowserRouter;
+
   return (
-    <BrowserRouter>
+    <Router>
       <AuthProvider>
         <Routes>
           {/* Public pages */}
@@ -62,7 +64,7 @@ const App = () => {
           } />
         </Routes>
       </AuthProvider>
-    </BrowserRouter>
+    </Router>
   );
 };
 
