@@ -6,6 +6,23 @@ const { generateToken } = require('../middleware/authMiddleware');
 const { sendVerificationEmail, sendWelcomeEmail } = require('../services/emailService');
 const { getPresignedUrl } = require('../services/storjService');
 
+const resolveClientUrl = () => {
+  const raw = process.env.CLIENT_URL || 'http://localhost:5173';
+  return raw.replace(/\/$/, '');
+};
+
+const getFrontendPath = (path, clientUrl) => {
+  const isLocalClient = /localhost|127\.0\.0\.1/.test(clientUrl);
+  return isLocalClient ? path : `/#${path}`;
+};
+
+const buildFrontendUrl = (path, query = {}) => {
+  const clientUrl = resolveClientUrl();
+  const routePath = getFrontendPath(path, clientUrl);
+  const queryString = new URLSearchParams(query).toString();
+  return `${clientUrl}${routePath}${queryString ? `?${queryString}` : ''}`;
+};
+
 // Helper function to add presigned URL (Storj) or passthrough external URLs
 const addPresignedUrl = async (user) => {
   const userData = user.toObject ? user.toObject() : { ...user };
@@ -270,18 +287,27 @@ const googleCallback = (req, res, next) => {
   passport.authenticate('google', { session: false }, (err, user, info) => {
     if (err) {
       console.error('Google OAuth error:', err);
-      const reason = encodeURIComponent(err.message || (info && info.message) || 'google_auth_failed');
-      return res.redirect(`${process.env.CLIENT_URL}/login?error=google_auth_failed&reason=${reason}`);
+      const reason = err.message || (info && info.message) || 'google_auth_failed';
+      const redirectUrl = buildFrontendUrl('/login', { error: 'google_auth_failed', reason });
+      console.log('[AUTH][GOOGLE][REDIRECT_ERROR]', { redirectUrl, reason });
+      return res.redirect(redirectUrl);
     }
 
     if (!user) {
       console.error('Google OAuth failed, no user returned. Info:', info);
-      const reason = encodeURIComponent((info && info.message) || 'no_user_from_google');
-      return res.redirect(`${process.env.CLIENT_URL}/login?error=google_auth_failed&reason=${reason}`);
+      const reason = (info && info.message) || 'no_user_from_google';
+      const redirectUrl = buildFrontendUrl('/login', { error: 'google_auth_failed', reason });
+      console.log('[AUTH][GOOGLE][REDIRECT_NO_USER]', { redirectUrl, reason });
+      return res.redirect(redirectUrl);
     }
 
     const token = generateToken(user._id);
-    res.redirect(`${process.env.CLIENT_URL}/auth/callback?token=${token}`);
+    const redirectUrl = buildFrontendUrl('/auth/callback', { token });
+    console.log('[AUTH][GOOGLE][REDIRECT_SUCCESS]', {
+      userId: user._id?.toString?.(),
+      redirectUrl,
+    });
+    res.redirect(redirectUrl);
   })(req, res, next);
 };
 
