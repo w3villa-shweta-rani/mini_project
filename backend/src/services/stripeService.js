@@ -38,15 +38,37 @@ const resolveClientUrl = (clientOrigin) => {
 const getClientPath = (path, clientUrl) => {
   const isLocalClient = /localhost|127\.0\.0\.1/.test(clientUrl);
   if (!isLocalClient) {
+    // Production frontend uses HashRouter.
     return `/#${path}`;
   }
   return path;
+};
+
+const getSuccessQuery = (clientUrl) => {
+  const isLocalClient = /localhost|127\.0\.0\.1/.test(clientUrl);
+  return '?session_id={CHECKOUT_SESSION_ID}';
+};
+
+const getCancelQuery = (clientUrl) => {
+  return '';
 };
 
 const createCheckoutSession = async (userId, userEmail, planType, clientOrigin) => {
   const plan = PLANS[planType];
   if (!plan) throw new Error('Invalid plan type');
   const clientUrl = resolveClientUrl(clientOrigin);
+  const successUrl = `${clientUrl}${getClientPath('/payment/success', clientUrl)}${getSuccessQuery(clientUrl)}`;
+  const cancelUrl = `${clientUrl}${getClientPath('/plans', clientUrl)}${getCancelQuery(clientUrl)}`;
+
+  console.log('[PAYMENT][CHECKOUT][BUILD_URLS]', {
+    nodeEnv: process.env.NODE_ENV,
+    clientOrigin: clientOrigin || null,
+    clientUrl,
+    successUrl,
+    cancelUrl,
+    planType,
+    userId: userId?.toString?.() || null,
+  });
 
   const session = await stripe.checkout.sessions.create({
     payment_method_types: ['card'],
@@ -70,8 +92,16 @@ const createCheckoutSession = async (userId, userEmail, planType, clientOrigin) 
       userId: userId.toString(),
       planType,
     },
-    success_url: `${clientUrl}${getClientPath('/payment/success?session_id={CHECKOUT_SESSION_ID}', clientUrl)}`,
-    cancel_url: `${clientUrl}${getClientPath('/plans', clientUrl)}`,
+    success_url: successUrl,
+    cancel_url: cancelUrl,
+  });
+
+  console.log('[PAYMENT][CHECKOUT][SESSION_CREATED]', {
+    sessionId: session.id,
+    sessionUrl: session.url,
+    paymentStatus: session.payment_status,
+    mode: session.mode,
+    successUrl,
   });
 
   return session;

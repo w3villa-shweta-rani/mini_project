@@ -23,6 +23,13 @@ const createCheckout = async (req, res, next) => {
   try {
     const { planType } = req.body;
 
+    console.log('[PAYMENT][CHECKOUT][REQUEST]', {
+      userId: req.user?._id?.toString?.() || null,
+      email: req.user?.email || null,
+      planType,
+      origin: req.headers.origin || null,
+    });
+
     if (!['Silver', 'Gold'].includes(planType)) {
       return res.status(400).json({ success: false, message: 'Invalid plan. Choose Silver or Gold.' });
     }
@@ -49,11 +56,22 @@ const verifyPayment = async (req, res, next) => {
   try {
     const { session_id } = req.query;
 
+    console.log('[PAYMENT][VERIFY][REQUEST]', {
+      sessionId: session_id || null,
+      requesterUserId: req.user?._id?.toString?.() || null,
+    });
+
     if (!session_id) {
       return res.status(400).json({ success: false, message: 'Session ID is required.' });
     }
 
     const session = await retrieveSession(session_id);
+
+    console.log('[PAYMENT][VERIFY][SESSION]', {
+      sessionId: session.id,
+      paymentStatus: session.payment_status,
+      metadata: session.metadata,
+    });
 
     if (session.payment_status !== 'paid') {
       return res.status(400).json({ success: false, message: 'Payment not completed.' });
@@ -62,6 +80,10 @@ const verifyPayment = async (req, res, next) => {
     const { userId, planType } = session.metadata;
 
     if (userId !== req.user._id.toString()) {
+      console.log('[PAYMENT][VERIFY][UNAUTHORIZED]', {
+        sessionUserId: userId,
+        requesterUserId: req.user._id.toString(),
+      });
       return res.status(403).json({ success: false, message: 'Unauthorized.' });
     }
 
@@ -77,6 +99,13 @@ const verifyPayment = async (req, res, next) => {
 
     // Email errors handled inside emailService
     await sendPaymentConfirmationEmail(user.email, user.name, planType, planExpireTime);
+
+    console.log('[PAYMENT][VERIFY][SUCCESS]', {
+      sessionId: session_id,
+      userId,
+      planType,
+      planExpireTime,
+    });
 
     res.status(200).json({
       success: true,
