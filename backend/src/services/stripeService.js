@@ -35,6 +35,13 @@ const resolveClientUrl = (clientOrigin) => {
   return raw.replace(/\/$/, '');
 };
 
+const getClientPath = (path) => {
+  if (process.env.NODE_ENV === 'production') {
+    return `/#${path}`;
+  }
+  return path;
+};
+
 const createCheckoutSession = async (userId, userEmail, planType, clientOrigin) => {
   const plan = PLANS[planType];
   if (!plan) throw new Error('Invalid plan type');
@@ -62,8 +69,8 @@ const createCheckoutSession = async (userId, userEmail, planType, clientOrigin) 
       userId: userId.toString(),
       planType,
     },
-    success_url: `${clientUrl}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${clientUrl}/plans`,
+    success_url: `${clientUrl}${getClientPath('/payment/success?session_id={CHECKOUT_SESSION_ID}')}`,
+    cancel_url: `${clientUrl}${getClientPath('/plans')}`,
   });
 
   return session;

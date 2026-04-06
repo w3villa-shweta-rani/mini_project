@@ -20,7 +20,7 @@ import Games from './pages/Games';
 import GamePlay from './pages/GamePlay';
 
 const App = () => {
-const Router = BrowserRouter;
+const Router = import.meta.env.PROD ? HashRouter : BrowserRouter;
 
   return (
     <Router>
